@@ -1,4 +1,3 @@
-package PACKAGE_NAME;
+abstract class Scheduler {
 
-public class Scheduler {
 }
