@@ -1,93 +1,130 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.util.*;
 
 public class SimulationController {
+
+    private static long currentTime = 0L;
+
+    // Kernel + PR
+    private static OtherKerServices sys = null;
+    private static PrManager pr = null;
+
     public static void main(String[] args) {
-        String fileName = "src/input.txt"; // change to your file path
+        String fileName = "src/input.txt";
 
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             String line;
-
             while ((line = br.readLine()) != null) {
-
-                // Trim spaces
                 line = line.trim();
-                if (line.isEmpty()) continue; // skip empty lines
+                if (line.isEmpty()) continue;
 
-                // Get the first letter
                 char type = line.charAt(0);
 
                 switch (type) {
-                    case 'C':
-                        List<Long> cVals = parseCmd(line);
-
-                        long arTime = cVals.get(0);
-                        long memSize = cVals.get(1);
-                        int numDevs = cVals.get(2).intValue();
-
-                        OtherKerServices sys = new OtherKerServices(memSize,numDevs);
-
+                    case 'C': { // C 9 M=45 S=12  (start, memory, devices)
+                        List<Long> v = parseCmd(line);
+                        long start   = v.get(0);
+                        long memSize = v.get(1);
+                        int  devs    = v.get(2).intValue();
+                        sysGen(start, memSize, devs); // ← per spec
                         break;
+                    }
 
-                    case 'A':
-                        List<Long> aVals = parseCmd(line);
+                    case 'A': { // A 10 J=1 M=5 S=4 R=8 P=1
+                        List<Long> a = parseCmd(line);
+                        long at   = a.get(0);
+                        long pid  = a.get(1);
+                        long mReq = a.get(2);
+                        long bt   = a.get(3);
+                        int  dReq = a.get(4).intValue();
+                        int  pri  = a.get(5).intValue();
 
-                        long arrivalTime = aVals.get(0);
-                        long PID         = aVals.get(1);
-                        long memoryReq   = aVals.get(2);
-                        long burstTime   = aVals.get(3);
-                        int devReq       = aVals.get(4).intValue();
-                        int priority     = aVals.get(5).intValue();
+                        // Advance PR time to the arrival instant (discrete-event)
+                        if (at > currentTime) {
+                            pr.cpuTimeAdvance(at - currentTime);
+                            currentTime = at;
+                        }
 
-                        Process p = new Process(PID, arrivalTime, burstTime, priority, memoryReq, devReq, 0);
+                        Process p = new Process(pid, at, bt, pri, mReq, dReq, 0);
+                        pr.procArrivalRoutine(p);
 
-
-
+                        // zero-time housekeeping (admit/schedule if possible)
+                        pr.cpuTimeAdvance(0);
                         break;
+                    }
 
-                    case 'D':
-                        List<Long> dVals = parseCmd(line);
-                        System.out.println("D values: " + dVals);
+                    case 'D': { // D t  — advance clock to t and print snapshot
+                        long t = parseCmd(line).get(0);
+                        if (t >= currentTime) {
+                            pr.cpuTimeAdvance(t - currentTime);
+                            currentTime = t;
+                            pr.printSnapshot();
+                        }
                         break;
+                    }
 
                     default:
-                        System.out.println("DEBUG -> Unknown Line: " + line);
-                        break;
+                        System.out.println("DEBUG -> Unknown line: " + line);
                 }
             }
+
+            // End of input: flush once (optional)
+            pr.cpuTimeAdvance(0);
 
         } catch (IOException e) {
             System.out.println("File error: " + e.getMessage());
         }
-    } // end of main :)
+    }
+
+    // ---- per spec: interpret C line and build sys + PR + Scheduler
+    private static void sysGen(long start, long memorySize, int numDevs) {
+        sys = new OtherKerServices(memorySize, numDevs);
+        pr  = new PrManager(start, sys);
+
+        // Ask user which scheduler to use (DRR/SRR/FCFS)
+        try (Scanner sc = new Scanner(System.in)) {
+            System.out.print("Choose scheduler [DRR | SRR | FCFS]: ");
+            String kind = sc.nextLine().trim().toUpperCase(Locale.ROOT);
+
+            switch (kind) {
+                case "SRR": {
+                    System.out.print("Enter team number (for quantum = 10 + team): ");
+                    int team = Integer.parseInt(sc.nextLine().trim());
+                    int q = 10 + Math.max(0, team);
+                    pr.setScheduler(new SRoundRobinScheduler(q));
+                    System.out.println("Scheduler = Static RR, quantum = " + q);
+                    break;
+                }
+                case "FCFS": {
+                    pr.setScheduler(new FCFScheduler());
+                    System.out.println("Scheduler = FCFS");
+                    break;
+                }
+                case "DRR":
+                default: {
+                    pr.setScheduler(new DRoundRobinScheduler()); // default DRR
+                    System.out.println("Scheduler = Dynamic RR (SR/AR)");
+                }
+            }
+        } catch (Exception ignore) {
+            // If stdin not available (e.g., tests), default to DRR
+            pr.setScheduler(new DRoundRobinScheduler());
+            System.out.println("Scheduler = Dynamic RR (default)");
+        }
+
+        currentTime = start;
+        // Let PR settle at start time
+        pr.cpuTimeAdvance(0);
+    }
 
     public static List<Long> parseCmd(String line) {
         List<Long> values = new ArrayList<>();
-
-        // Split by spaces
         String[] parts = line.trim().split(" ");
-
-        // First part has only the command type (C / A / D), skip it
         for (int i = 1; i < parts.length; i++) {
             String p = parts[i];
-
-            // Cases:
-            //     "9"           -> pure number
-            //     "M=45"        -> key=value, get value
-            //     "D 36"        -> same logic will capture 36
-            if (p.contains("=")) {
-                // Split "M=45" -> ["M","45"] → take 45
-                String value = p.substring(p.indexOf('=') + 1);
-                values.add(Long.parseLong(value));
-            } else {
-                // Pure number like "9" or "36"
-                values.add(Long.parseLong(p));
-            }
+            if (p.contains("=")) values.add(Long.parseLong(p.substring(p.indexOf('=') + 1)));
+            else values.add(Long.parseLong(p));
         }
-
         return values;
-    } // end of parseCmd
+    }
 }
