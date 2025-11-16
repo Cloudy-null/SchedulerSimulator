@@ -5,7 +5,7 @@ public class PrManager {
 
     // Queues managed here (per UML)
     private final Queue SUBMIT = new Queue("SUBMIT");
-    private final Queue HQ1    = new Queue("HQ1");   // ascending mem (your Queue supports later sorting)
+    private final Queue HQ1    = new Queue("HQ1");   // ascending mem
     private final Queue HQ2    = new Queue("HQ2");   // FIFO
     private final Queue READY  = new Queue("READY"); // FIFO for RR
 
@@ -28,6 +28,17 @@ public class PrManager {
 
     // new arrival from SimulationController
     public void procArrivalRoutine(Process p) {
+        // ====== IMPOSSIBLE PROCESS CHECK ======
+        // assumes: oks.canEverFit(p) returns false if p needs more
+        // memory/devices than the system TOTAL capacity.
+        if (!oks.canEverFit(p)) {
+            // just ignore it; optionally print a message for debugging
+            System.out.println("t=" + internalClock + " IGNORE P" + p.getPID()
+                    + " (needs M=" + p.getMemoryReq()
+                    + ", R=" + p.getDevReq()
+                    + " > system capacity)");
+            return;
+        }
         // land first in SUBMIT; admission occurs when time advances
         SUBMIT.enqueue(p);
     }
@@ -56,14 +67,15 @@ public class PrManager {
         System.out.println("HQ1   : " + HQ1);
         System.out.println("HQ2   : " + HQ2);
         System.out.println("SUBMIT: " + SUBMIT);
-        System.out.println("RUN   : " + (running == null ? "idle" : ("PID " + running.getPID() + " until " + runningUntil)));
+        System.out.println("RUN   : " + (running == null
+                ? "idle"
+                : ("PID " + running.getPID() + " until " + runningUntil)));
         System.out.println(oks);
         System.out.println("-----------------------------------");
     }
 
     // === PRIVATE engine ===
 
-    // PRIVATE
     private void dispatch(long target) {
         if (target < internalClock) return;
 
@@ -76,7 +88,7 @@ public class PrManager {
             scheduleNext();
             long rem = getRemainingBurst(running);
             int slice = scheduler.computeTimeSlice(running, READY);
-            runningUntil = internalClock + Math.max(1, (int)Math.min(rem, slice));
+            runningUntil = internalClock + Math.max(1, (int) Math.min(rem, slice));
         }
 
         // Walk from event to event until we reach target
@@ -104,7 +116,7 @@ public class PrManager {
                 scheduleNext();
                 long rem = getRemainingBurst(running);
                 int slice = scheduler.computeTimeSlice(running, READY);
-                runningUntil = internalClock + Math.max(1, (int)Math.min(rem, slice));
+                runningUntil = internalClock + Math.max(1, (int) Math.min(rem, slice));
             } else if (running == null) {
                 // Nothing to run; we can fast-forward to target.
                 // (Loop will exit on next iteration.)
@@ -112,14 +124,19 @@ public class PrManager {
         }
     }
 
-
     private void drainSubmitToSystem() {
         while (!SUBMIT.isEmpty()) {
             Process p = SUBMIT.dequeue();
+
+            // at this point we already filtered impossible jobs in procArrivalRoutine
             if (oks.allocate(p)) {
                 READY.enqueue(p);
             } else {
-                if (p.getPriority() == 1) HQ1.enqueue(p); else HQ2.enqueue(p);
+                if (p.getPriority() == 1) {
+                    HQ1.enqueue(p);
+                } else {
+                    HQ2.enqueue(p);
+                }
             }
         }
     }
@@ -130,11 +147,19 @@ public class PrManager {
             moved = false;
             if (!HQ1.isEmpty()) {
                 Process h1 = HQ1.peek();
-                if (oks.allocate(h1)) { HQ1.dequeue(); READY.enqueue(h1); moved = true; }
+                if (oks.allocate(h1)) {
+                    HQ1.dequeue();
+                    READY.enqueue(h1);
+                    moved = true;
+                }
             }
             if (!moved && !HQ2.isEmpty()) {
                 Process h2 = HQ2.peek();
-                if (oks.allocate(h2)) { HQ2.dequeue(); READY.enqueue(h2); moved = true; }
+                if (oks.allocate(h2)) {
+                    HQ2.dequeue();
+                    READY.enqueue(h2);
+                    moved = true;
+                }
             }
         } while (moved);
     }
@@ -154,7 +179,7 @@ public class PrManager {
         boolean finished = (getRemainingBurst(running) <= 0);
         if (finished) {
             oks.release(running);
-            // TODO: push to a Completed queue for stats if needed
+            // could push to a Completed queue for stats if needed
             running = null;
         } else {
             // quantum expired → RR: requeue

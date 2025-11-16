@@ -35,8 +35,8 @@ public class SimulationController {
                         long at   = a.get(0);
                         long pid  = a.get(1);
                         long mReq = a.get(2);
-                        long bt   = a.get(3);
-                        int  dReq = a.get(4).intValue();
+                        int dReq   = a.get(3).intValue();
+                        long  bt = a.get(4);
                         int  pri  = a.get(5).intValue();
 
                         // Advance PR time to the arrival instant (discrete-event)
@@ -45,7 +45,7 @@ public class SimulationController {
                             currentTime = at;
                         }
 
-                        Process p = new Process(pid, at, bt, pri, mReq, dReq, 0);
+                        Process p = new Process(pid, at, bt, pri, mReq, dReq, 0); // TODO send the data not the object
                         pr.procArrivalRoutine(p);
 
                         // zero-time housekeeping (admit/schedule if possible)

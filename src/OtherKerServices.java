@@ -57,6 +57,12 @@ public class OtherKerServices {
         deallocateMemory(p.getMemoryReq());
     }
 
+    public boolean canEverFit(Process p) {
+        // compare against TOTAL capacity, not current free values
+        return p.getMemoryReq() <= memorySize && p.getDevReq() <= noDevs;
+    }
+
+
     // ===== Introspection =====
     public synchronized long getFreeMemory() { return memorySize - memInUse; }
     public synchronized int getFreeDevices() { return noDevs - devsInUse; }
