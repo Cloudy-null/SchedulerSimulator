@@ -26,7 +26,9 @@ public class OtherKerServices {
 
     // ===== Devices =====
     public synchronized boolean reserveDevices(int n) {
-        if (n <= 0) return false;
+        if (n < 0) return false;         // invalid
+        if (n == 0) return true;         // no devices needed
+
         if (devsInUse + n > noDevs) return false;
         devsInUse += n;
         return true;
@@ -38,14 +40,12 @@ public class OtherKerServices {
     }
 
     // ===== Atomic convenience for a Process =====
-    // Assumes your Process has getters: getMemoryReq(), getDevReq()
     public synchronized boolean allocate(Process p) {
         long mem = p.getMemoryReq();
         int dev = p.getDevReq();
 
         if (!allocateMemory(mem)) return false;
         if (!reserveDevices(dev)) {
-            // rollback memory if devices unavailable
             deallocateMemory(mem);
             return false;
         }
@@ -58,10 +58,8 @@ public class OtherKerServices {
     }
 
     public boolean canEverFit(Process p) {
-        // compare against TOTAL capacity, not current free values
         return p.getMemoryReq() <= memorySize && p.getDevReq() <= noDevs;
     }
-
 
     // ===== Introspection =====
     public synchronized long getFreeMemory() { return memorySize - memInUse; }
