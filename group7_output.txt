@@ -1,0 +1,175 @@
+
+CONFIG at 2.00: mem=100 devices=1 scheduler=StaticRR
+
+-------------------------------------------------------
+System Status:                                         
+-------------------------------------------------------
+          Time: 16.00
+  Total Memory: 100
+ Avail. Memory: 6
+ Total Devices: 1
+Avail. Devices: 0
+
+Jobs in Ready List                                      
+--------------------------------------------------------
+Job ID 6 , 7.00 Cycles left to completion.
+
+Jobs in Long Job List                                   
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Hold List 1                                     
+--------------------------------------------------------
+Job ID 2 , 2.00 Cycles left to completion.
+Job ID 8 , 4.00 Cycles left to completion.
+Job ID 4 , 15.00 Cycles left to completion.
+Job ID 3 , 1.00 Cycles left to completion.
+Job ID 7 , 10.00 Cycles left to completion.
+
+Jobs in Hold List 2                                     
+--------------------------------------------------------
+  EMPTY
+
+
+Finished Jobs (detailed)                                
+--------------------------------------------------------
+  Job    ArrivalTime     CompleteTime     TurnaroundTime    WaitingTime
+------------------------------------------------------------------------
+  EMPTY
+
+
+-------------------------------------------------------
+System Status:                                         
+-------------------------------------------------------
+          Time: 999999.00
+  Total Memory: 100
+ Avail. Memory: 100
+ Total Devices: 1
+Avail. Devices: 1
+
+Jobs in Ready List                                      
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Long Job List                                   
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Hold List 1                                     
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Hold List 2                                     
+--------------------------------------------------------
+  EMPTY
+
+
+Finished Jobs (detailed)                                
+--------------------------------------------------------
+  Job    ArrivalTime     CompleteTime     TurnaroundTime    WaitingTime
+------------------------------------------------------------------------
+  1      3.00           17.00           14.00              0.00          
+  2      4.00           26.00           22.00              20.00         
+  3      6.00           59.00           53.00              52.00         
+  4      8.00           58.00           50.00              35.00         
+  6      12.00          24.00           12.00              5.00          
+  7      13.00          69.00           56.00              46.00         
+  8      15.00          35.00           20.00              16.00         
+  9      18.00          78.00           60.00              51.00         
+  10     20.00          40.00           20.00              15.00         
+  12     24.00          43.00           19.00              16.00         
+  13     25.00          31.00           6.00               1.00          
+  14     28.00          82.00           54.00              50.00         
+  15     31.00          95.00           64.00              51.00         
+Total Finished Jobs:             13
+
+
+
+CONFIG at 1.00: mem=200 devices=1 scheduler=StaticRR
+
+-------------------------------------------------------
+System Status:                                         
+-------------------------------------------------------
+          Time: 9.00
+  Total Memory: 200
+ Avail. Memory: 150
+ Total Devices: 1
+Avail. Devices: 1
+
+Jobs in Ready List                                      
+--------------------------------------------------------
+Job ID 2 , 4.00 Cycles left to completion.
+Job ID 3 , 2.00 Cycles left to completion.
+Job ID 4 , 19.00 Cycles left to completion.
+Job ID 5 , 5.00 Cycles left to completion.
+
+Jobs in Long Job List                                   
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Hold List 1                                     
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Hold List 2                                     
+--------------------------------------------------------
+  EMPTY
+
+
+Finished Jobs (detailed)                                
+--------------------------------------------------------
+  Job    ArrivalTime     CompleteTime     TurnaroundTime    WaitingTime
+------------------------------------------------------------------------
+  EMPTY
+
+
+-------------------------------------------------------
+System Status:                                         
+-------------------------------------------------------
+          Time: 999999.00
+  Total Memory: 200
+ Avail. Memory: 200
+ Total Devices: 1
+Avail. Devices: 1
+
+Jobs in Ready List                                      
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Long Job List                                   
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Hold List 1                                     
+--------------------------------------------------------
+  EMPTY
+
+Jobs in Hold List 2                                     
+--------------------------------------------------------
+  EMPTY
+
+
+Finished Jobs (detailed)                                
+--------------------------------------------------------
+  Job    ArrivalTime     CompleteTime     TurnaroundTime    WaitingTime
+------------------------------------------------------------------------
+  1      2.00           17.00           15.00              0.00          
+  2      4.00           21.00           17.00              13.00         
+  3      5.00           23.00           18.00              16.00         
+  4      7.00           103.00          96.00              77.00         
+  5      8.00           44.00           36.00              31.00         
+  6      10.00          48.00           38.00              34.00         
+  7      12.00          52.00           40.00              36.00         
+  8      14.00          62.00           48.00              38.00         
+  9      15.00          66.00           51.00              47.00         
+  10     16.00          104.00          88.00              71.00         
+  11     18.00          85.00           67.00              64.00         
+  12     20.00          88.00           68.00              65.00         
+  13     22.00          94.00           72.00              66.00         
+  14     24.00          97.00           73.00              70.00         
+  15     27.00          100.00          73.00              70.00         
+Total Finished Jobs:             15
+
+
+
+--- Simulation finished at time 999999.0 ---

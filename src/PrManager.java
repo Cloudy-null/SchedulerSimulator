@@ -18,11 +18,8 @@ public class PrManager {
 
     private Scheduler scheduler = new DRoundRobinScheduler();
 
-    // ============================================================
-    //                 FINISHED JOB ACCOUNTING
-    // ============================================================
+    // ===== FINISHED JOB ACCOUNTING =====
 
-    // store original burst for waiting-time calculation
     private final Map<Long, Long> totalBurstByPid = new HashMap<>();
 
     private static class FinishedJob {
@@ -43,8 +40,6 @@ public class PrManager {
 
     private final List<FinishedJob> finishedJobs = new ArrayList<>();
 
-    // ============================================================
-
     public PrManager(long startTime, OtherKerServices oks) {
         this.internalClock = startTime;
         this.oks = oks;
@@ -55,32 +50,33 @@ public class PrManager {
     }
 
     // ============================================================
-    //                     PUBLIC API
+    //                          PUBLIC
     // ============================================================
 
-    public void procArrivalRoutine(Process p) {
+    /**
+     * New arrival from SimulationController.
+     * Creates the Process, checks if it can ever fit, and enqueues in SUBMIT.
+     * Actual admission to READY/HOLD occurs in drainSubmitToSystem().
+     */
+    public void procArrivalRoutine(long pid,
+                                   long at,
+                                   long bt,
+                                   int priority,
+                                   long memReq,
+                                   int devReq) {
 
-        // store original burst once
+        Process p = new Process(pid, at, bt, priority, memReq, devReq, 0);
+
+        // store original burst for waiting-time calculation
         totalBurstByPid.put(p.getPID(), p.getBurstTime());
 
-        // reject impossible
+        // reject impossible jobs (bigger than total system capacity)
         if (!oks.canEverFit(p)) {
-            System.out.println("t=" + internalClock + " IGNORE P" + p.getPID()
-                    + " (needs M=" + p.getMemoryReq()
-                    + ", R=" + p.getDevReq() + " > system capacity)");
             return;
         }
 
-        // Try admission immediately → READY or HOLD queue
-        if (oks.allocate(p)) {
-            READY.enqueue(p);
-        } else {
-            if (p.getPriority() == 1) {
-                HQ1.enqueue(p);
-            } else {
-                HQ2.enqueue(p);
-            }
-        }
+        // all arrivals first land in SUBMIT
+        SUBMIT.enqueue(p);
     }
 
     public void cpuTimeAdvance(long duration) {
@@ -99,7 +95,6 @@ public class PrManager {
         return (running == null) ? -1 : running.getPID();
     }
 
-    // OLD debug snapshot (you can still use it if needed)
     public void printSnapshot() {
         System.out.println("---- PR Snapshot @ " + internalClock + " ----");
         System.out.println("READY : " + READY);
@@ -114,12 +109,13 @@ public class PrManager {
     }
 
     // ============================================================
-    //                      DISPATCH ENGINE
+    //                      MAIN ENGINE
     // ============================================================
 
     private void dispatch(long target) {
         if (target < internalClock) return;
 
+        // admit anything pending in SUBMIT/HQs at the current time
         drainSubmitToSystem();
         tryAdmitFromHolds();
 
@@ -153,14 +149,22 @@ public class PrManager {
         }
     }
 
+    /**
+     * Move processes from SUBMIT into the system:
+     * - if resources available → READY
+     * - else → HQ1 or HQ2 based on priority
+     */
     private void drainSubmitToSystem() {
         while (!SUBMIT.isEmpty()) {
             Process p = SUBMIT.dequeue();
             if (oks.allocate(p)) {
                 READY.enqueue(p);
             } else {
-                if (p.getPriority() == 1) HQ1.enqueue(p);
-                else HQ2.enqueue(p);
+                if (p.getPriority() == 1) {
+                    HQ1.enqueue(p);
+                } else {
+                    HQ2.enqueue(p);
+                }
             }
         }
     }
@@ -243,7 +247,6 @@ public class PrManager {
         p.setBurstTime(v);
     }
 
-    // expose finished jobs for printing
     public List<long[]> getFinishedJobsSnapshot(long upToTime) {
         List<long[]> out = new ArrayList<>();
         for (FinishedJob fj : finishedJobs) {
@@ -263,8 +266,6 @@ public class PrManager {
     public int getTotalFinishedCount() {
         return finishedJobs.size();
     }
-
-    // === NEW: expose queue snapshots for formatted printing ===
 
     public List<Process> getReadySnapshot() {
         return READY.snapshot();
