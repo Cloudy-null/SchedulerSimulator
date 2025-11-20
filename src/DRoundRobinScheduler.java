@@ -17,12 +17,11 @@ public class DRoundRobinScheduler extends Scheduler {
         long remSel = selected.getBurstTime();
         if (firstSlice) {
             firstSlice = false;
-            SR = 0; AR = 0; // reset book-keeping (optional)
+            SR = 0; AR = 0; // reset book keeping
             return (int)Math.max(1, remSel);
         }
 
         // 2) For subsequent decisions: AR = average of the remaining bursts
-        //    of processes in READY **including** the new arrival(s) AND **including** the selected process.
         long sum = remSel;
         int  cnt = 1;
 
@@ -39,7 +38,6 @@ public class DRoundRobinScheduler extends Scheduler {
         return AR;
     }
 
-    // Optional getters if you want to print SR/AR for debugging
     public long getSR() { return SR; }
     public int  getAR() { return AR; }
 }

@@ -41,7 +41,7 @@ public class PrManager {
     private final List<FinishedJob> finishedJobs = new ArrayList<>();
 
     public PrManager(long startTime, OtherKerServices oks) {
-        this.internalClock = startTime;
+        this.internalClock = 0;
         this.oks = oks;
     }
 

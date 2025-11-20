@@ -195,7 +195,7 @@ public class SimulationController {
             pr.setScheduler(GLOBAL_SCHEDULER);
         }
 
-        currentTime = start;
+        currentTime = 0;
 
         // Print formatted configuration header to output file
         out.printf("%nCONFIG at %.2f: mem=%d devices=%d scheduler=%s%n%n",
